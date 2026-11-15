@@ -1,0 +1,38 @@
+[project]
+name = "inkognito_backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "", email = "" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.1",
+    "bcrypt>=5.0.0",
+    "email-validator>=2.3.0",
+    "fastapi>=0.162.4",
+    "google-auth[requests]>=2.62.2",
+    "httpx>=0.28.1",
+    "psycopg>=3.3.9",
+    "pyjwt>=2.15.1",
+    "python-dotenv>=1.2.4",
+    "sqlmodel>=0.0.48",
+    "uvicorn>=0.54.0",
+]
+
+# [project.scripts]
+# backend = "backend:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
