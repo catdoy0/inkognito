@@ -14,8 +14,7 @@ def get_user_by_email(email: str) -> Users | None:
     with Session(engine) as s:
         return s.exec(
             select(Users).where(
-                func.lower(Users.email) == cleaned_email,
-                Users.is_active == True
+                func.lower(Users.email) == cleaned_email
             )
         ).first()
 
@@ -36,11 +35,11 @@ def get_user_by_oauth(provider: str, provider_user_id: str) -> Users | None:
 
 
 
-def get_user_record_by_email(email: str) -> Users | None:
-    with Session(engine) as s:
-        return s.exec(
-            select(Users).where(func.lower(Users.email) == email.strip().lower())
-        ).first()
+# def get_user_record_by_email(email: str) -> Users | None:
+#     with Session(engine) as s:
+#         return s.exec(
+#             select(Users).where(func.lower(Users.email) == email.strip().lower())
+#         ).first()
 
 
 def link_google_identity(user_id: int, google_id: str, avatar_url: str | None) -> Users | None:

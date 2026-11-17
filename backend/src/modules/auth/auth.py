@@ -71,7 +71,11 @@ def signup_user(data: SignUpRequest) -> tuple[Users, str, str]:
 
 def signin_user(data: LoginRequest) -> tuple[Users, str, str]:
     user = auth_sql.get_user_by_email(data.email)
-    if not user or not verify_password(data.password, user.password_hash):
+    if (
+        not user
+        or user.password_hash is None
+        or not verify_password(data.password, user.password_hash)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",

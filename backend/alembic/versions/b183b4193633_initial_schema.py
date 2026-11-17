@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 8b92bf096ae4
+Revision ID: b183b4193633
 Revises: 
-Create Date: 2026-11-16 01:32:50.014449
+Create Date: 2026-11-17 14:11:11.855186
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8b92bf096ae4'
+revision: str = 'b183b4193633'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.Column('first_name', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
     sa.Column('last_name', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('password_hash', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
+    sa.Column('password_hash', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
     sa.Column('oauth_provider', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
     sa.Column('oauth_id', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
     sa.Column('avatar_url', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),

@@ -1,11 +1,8 @@
-import secrets
-
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.models.users import Users
 from src.modules.auth.auth import issue_token_pair
-from src.modules.auth.passwords import hash_password
 from src.sql import auth as auth_sql
 
 
@@ -19,7 +16,7 @@ def signin_google_user(claims: dict) -> tuple[Users, str, str]:
     user = auth_sql.get_user_by_oauth("google", google_id)
 
     if user is None:
-        existing = auth_sql.get_user_record_by_email(email)
+        existing = auth_sql.get_user_by_email(email)
         if existing is not None:
             if not existing.is_active:
                 raise HTTPException(status_code=403, detail="Account is disabled")
@@ -48,8 +45,7 @@ def signin_google_user(claims: dict) -> tuple[Users, str, str]:
                 first_name=(given_name or "")[:50] or None,
                 last_name=(family_name or "")[:50] or None,
                 email=email,
-                # OAuth-only accounts still satisfy the existing non-null password column.
-                password_hash=hash_password(secrets.token_urlsafe(48)),
+                password_hash=None,
                 oauth_provider="google",
                 oauth_id=google_id,
                 avatar_url=(claims.get("picture") or "")[:500] or None,
