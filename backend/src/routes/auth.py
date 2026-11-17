@@ -1,39 +1,34 @@
-import json
-
-from fastapi import APIRouter, Cookie, HTTPException, Request, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from google.auth.exceptions import GoogleAuthError
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
-from jwt import PyJWTError
 
-from src.config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    AUTH_COOKIE_OPTIONS,
-    GOOGLE_CLIENT_ID,
-    REFRESH_TOKEN_EXPIRE_DAYS,
-)
+from src.config import AUTH_COOKIE_OPTIONS, GOOGLE_CLIENT_ID, REFRESH_TOKEN_EXPIRE_DAYS
+from src.models.users import Users
 from src.modules.auth.auth import (
-    get_current_user_id,
     refresh_session,
     revoke_refresh_token,
     serialize_user,
     signin_user,
     signup_user,
 )
+from src.modules.auth.dependencies import get_current_user
 from src.modules.auth.google_oauth import signin_google_user
-from src.modules.auth.tokens import decode_access_token
 from src.schemas.auth import (
+    AuthResponse,
     CheckEmailRequest,
+    CheckEmailResponse,
     GoogleSignInRequest,
     LoginRequest,
+    MessageResponse,
     SignUpRequest,
+    UserResponse,
 )
 from src.sql import auth as auth_sql
 
 router = APIRouter(tags=["auth"])
 
 
-# ACCESS_MAX_AGE = ACCESS_TOKEN_EXPIRE_MINUTES * 60
 REFRESH_MAX_AGE = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
 
@@ -47,7 +42,12 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-def _auth_payload(response: Response, user, access_token: str, refresh_token: str) -> dict:
+def _auth_payload(
+    response: Response,
+    user: Users,
+    access_token: str,
+    refresh_token: str,
+) -> dict:
     """
     Standard auth response:
       - refresh_token: HttpOnly cookie (browser stores it, JS can't read it)
@@ -61,20 +61,20 @@ def _auth_payload(response: Response, user, access_token: str, refresh_token: st
     }
 
 
-@router.post("/signup")
-def signup(data: SignUpRequest, response: Response):
+@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+def signup(data: SignUpRequest, response: Response) -> dict:
     user, access_token, refresh_token = signup_user(data)
     return _auth_payload(response, user, access_token, refresh_token)
 
 
-@router.post("/signin")
-def signin(data: LoginRequest, response: Response):
+@router.post("/signin", response_model=AuthResponse)
+def signin(data: LoginRequest, response: Response) -> dict:
     user, access_token, refresh_token = signin_user(data)
     return _auth_payload(response, user, access_token, refresh_token)
 
 
-@router.post("/google-signin")
-def google_signin(data: GoogleSignInRequest, response: Response):
+@router.post("/google-signin", response_model=AuthResponse)
+def google_signin(data: GoogleSignInRequest, response: Response) -> dict:
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Google sign-in is not configured")
 
@@ -84,8 +84,6 @@ def google_signin(data: GoogleSignInRequest, response: Response):
             GoogleRequest(),
             GOOGLE_CLIENT_ID,
         )
-        print(json.dumps(claims, indent=2))
-
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid Google credential")
     except GoogleAuthError:
@@ -98,19 +96,17 @@ def google_signin(data: GoogleSignInRequest, response: Response):
     return _auth_payload(response, user, access_token, refresh_token)
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=AuthResponse)
 def refresh(
     response: Response,
-    refresh_token: str | None = Cookie(default=None)
-):
+    refresh_token: str | None = Cookie(default=None, description="HttpOnly refresh token cookie"),
+) -> dict:
     """
     Client-only. Rotates the refresh cookie and returns a new access token.
     Called:
       - on app mount (rehydrate Redux after refresh)
       - by Axios 401 interceptor (silent refresh)
     """
-    # refresh_token = request.cookies.get("refresh_token")
-
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Refresh token is missing")
 
@@ -118,18 +114,28 @@ def refresh(
     return _auth_payload(response, user, new_access, new_refresh)
 
 
-@router.post("/logout", summary="Revoke the refresh token and clear the cookie")
+@router.post(
+    "/logout",
+    summary="Revoke the refresh token and clear the cookie",
+    response_model=MessageResponse,
+)
 def logout(
     response: Response,
-    refresh_token: str | None = Cookie(default=None),
-):
+    refresh_token: str | None = Cookie(default=None, description="HttpOnly refresh token cookie"),
+) -> dict[str, str]:
     revoke_refresh_token(refresh_token)
-    response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("refresh_token", path="/", **AUTH_COOKIE_OPTIONS)
     return {"message": "Logged out"}
 
 
-@router.post("/check-email-taken")
-def check_email_taken(data: CheckEmailRequest):
+# @router.get("/me", response_model=UserResponse)
+# def me(user: Users = Depends(get_current_user)) -> Users:
+#     """Return the signed-in user using the bearer access token."""
+#     return user
+
+
+@router.post("/check-email-taken", response_model=CheckEmailResponse)
+def check_email_taken(data: CheckEmailRequest) -> dict:
     return {
         "email": data.email,
         "taken": auth_sql.email_exists(data.email),

@@ -28,15 +28,12 @@ def create_access_token(user: Users) -> str:
     """
     Create a signed, short-lived token
     """
-    if user.id is None:
-        raise ValueError("Cannot issue a token for a user without an ID")
 
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user.id),
         "email": user.email,
         "role": user.role.value,
-        # "credits_centavos": user.credits_centavos,
         "type": "access",
         "iss": JWT_ISSUER,
         "aud": JWT_AUDIENCE,
@@ -61,9 +58,8 @@ def decode_access_token(token: str) -> dict[str, Any]:
         algorithms=[JWT_ALGORITHM],
         issuer=JWT_ISSUER,
         audience=JWT_AUDIENCE,
-        options={"require": ["sub", "type", "role", "iat", "exp", "iss", "aud"]},
+        options={"require": ["sub", "type", "email", "role", "iat", "exp", "iss", "aud"]},
     )
-    print(payload)
     if payload.get("type") != "access":
         raise jwt.InvalidTokenError("Expected an access token")
     if not isinstance(payload.get("sub"), str) or not payload["sub"].isdecimal():

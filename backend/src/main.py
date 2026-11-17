@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.body_limit import RequestBodyLimitMiddleware
 from starlette.responses import JSONResponse
 
 from src.config import CORS_ORIGINS, validate_config
@@ -27,8 +28,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title="template backend",
-    docs_url="/docs"
+    title="Inkognito API",
+    description="API for the Inkognito self-service printing system.",
+    version="0.1.0",
+    docs_url="/docs",
 )
 
 app.add_middleware(
@@ -37,6 +40,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    RequestBodyLimitMiddleware,
+    max_body_size=10 * 1024 * 1024 # 10mb
 )
 
 app.include_router(auth_router, prefix="/auth")

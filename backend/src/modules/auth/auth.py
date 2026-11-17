@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, status
 
 from src.models.users import Users
 from src.modules.auth.passwords import hash_password, verify_password
 from src.modules.auth.tokens import (
     create_access_token,
     create_refresh_token,
-    decode_access_token,
     refresh_expiry,
 )
 from src.schemas.auth import LoginRequest, SignUpRequest
@@ -117,28 +116,3 @@ def revoke_refresh_token(raw_token: str | None) -> None:
     row = auth_sql.get_refresh_by_raw_token(raw_token)
     if row and row.id:
         auth_sql.delete_refresh(row.id)
-
-
-def get_current_user_id(request: Request) -> int | None:
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-    try:
-        claims = decode_access_token(token)
-        return int(claims["sub"])
-    except Exception:
-        return None
-
-
-
-def require_active_user(request: Request) -> Users:
-    """Return the authenticated active user or raise the standard auth error."""
-    user_id = get_current_user_id(request)
-    if user_id is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = auth_sql.get_user_by_id(user_id)
-    if user is None or not user.is_active:
-        raise HTTPException(status_code=403, detail="Account is unavailable")
-
-    return user

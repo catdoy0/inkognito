@@ -10,7 +10,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),) -> Users:
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> Users:
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
