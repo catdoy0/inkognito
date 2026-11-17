@@ -62,12 +62,12 @@ export default function SignUpFormSection() {
         setEmailError("This email is already registered.");
         return;
       }
-      const session = await dispatch(signUp({
+      await dispatch(signUp({
         email: email.trim(),
         password,
         confirm_password: confirmPassword,
       })).unwrap();
-      if (session.user.role !== "GUEST") router.replace("/dashboard");
+      router.replace("/dashboard");
     } catch (cause) {
       setError(getErrorMessage(cause, "Unable to create your account. Please try again."));
     } finally {
@@ -79,8 +79,8 @@ export default function SignUpFormSection() {
     setError("");
     setSubmitting(true);
     try {
-      const session = await dispatch(signInWithGoogle(credential)).unwrap();
-      if (session.user.role !== "GUEST") router.replace("/dashboard");
+      await dispatch(signInWithGoogle(credential)).unwrap();
+      router.replace("/dashboard");
     } catch (cause) {
       setError(getErrorMessage(cause, "Google sign-in failed. Please try again."));
     } finally {

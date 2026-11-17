@@ -2,6 +2,7 @@ import type { AuthSession, SignUpPayload } from "@/types/auth";
 import { API_URL } from "./config";
 
 let refreshInFlight: Promise<AuthSession | null> | null = null;
+const REFRESH_TIMEOUT_MS = 10_000;
 
 async function readError(response: Response, fallback: string) {
   try {
@@ -58,15 +59,20 @@ export async function signInWithGoogle(credential: string): Promise<AuthSession>
 export async function refreshSession(): Promise<AuthSession | null> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
       try {
         const response = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
           credentials: "include",
+          signal: controller.signal,
         });
         if (!response.ok) return null;
         return await response.json();
       } catch {
         return null;
+      } finally {
+        clearTimeout(timeout);
       }
     })();
   }

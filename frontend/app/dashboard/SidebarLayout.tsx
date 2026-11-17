@@ -27,13 +27,13 @@ import type { Role } from "@/types/auth";
 import { dashboardSectionsByRole } from "./DashboardNav";
 import { DASHBOARD_ROUTES } from "./routes";
 
-const defaultRole: Role = "ADMIN";
+const defaultRole: Role = "GUEST";
 
 export default function SidebarLayout() {
   const session = useAppSelector((state) => state.auth.session);
   const pathname = usePathname();
   const role = session?.user.role ?? defaultRole;
-  const userName = session ? `${session.user.email}`.trim() : "template@email.com";
+  const userName = session ? `${session.user.email}`.trim() : "";
 
   return (
     <Sidebar collapsible="icon">

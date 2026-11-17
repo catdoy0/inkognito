@@ -22,7 +22,7 @@ const settings = { label: "Settings", href: DASHBOARD_ROUTES.SETTINGS, icon: Set
 
 const userSections: DashboardSidebarSection[] = [
   { label: "Workspace", items: [overview] },
-  { label: "Account", items: [profile, topUp, settings] },
+  { label: "Account", items: [topUp, settings] },
 ];
 
 const administratorSections: DashboardSidebarSection[] = [

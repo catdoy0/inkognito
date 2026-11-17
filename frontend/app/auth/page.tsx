@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import SignInFormSection from "./_components/SignInFormSection";
 
 export default function AuthPage() {
-  redirect("/auth/signin");
+  return <SignInFormSection />;
 }

@@ -34,8 +34,8 @@ export default function SignInFormSection() {
     setSubmitting(true);
 
     try {
-      const session = await dispatch(signIn({ email: email.trim(), password })).unwrap();
-      if (session.user.role !== "GUEST") router.replace("/dashboard");
+      await dispatch(signIn({ email: email.trim(), password })).unwrap();
+      router.replace("/dashboard");
     } catch (cause) {
       setError(getErrorMessage(cause, "Unable to sign in. Please try again."));
     } finally {
@@ -47,8 +47,8 @@ export default function SignInFormSection() {
     setError("");
     setSubmitting(true);
     try {
-      const session = await dispatch(signInWithGoogle(credential)).unwrap();
-      if (session.user.role !== "GUEST") router.replace("/dashboard");
+      await dispatch(signInWithGoogle(credential)).unwrap();
+      router.replace("/dashboard");
     } catch (cause) {
       setError(getErrorMessage(cause, "Google sign-in failed. Please try again."));
     } finally {
